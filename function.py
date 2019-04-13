@@ -14,9 +14,9 @@ def read_graph_from_file(path):
         csv_reader = csv.reader(file_handle, delimiter = ' ')
         #next(csv_reader) # skipping the header
         for row in csv_reader:  
-            a = row[0]
-            b = row[1]
-            t = row[2]
+            a = int(row[0])
+            b = int(row[1])
+            t = int(row[2])
             if a not in nodes:
                 nodes.append(a)
             if b not in nodes:

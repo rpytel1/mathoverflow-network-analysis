@@ -31,13 +31,12 @@ class Algorithm:
         self.counts = Counter()
 
         for end in range(len(edges)):
-            # print(end)
             while times[start] + delta < times[end]:
                 self.decrement_count(edges[start])
                 start += 1
             self.increment_count(edges[end])
         edges_list = [elem.edges() for elem in self.counts.keys()]
-        print("Keys:" + str(len(self.counts.keys())))
+
         # values for which key has 3 edges
         key_list = [elem for elem in self.counts if len(elem.edges()) == 3]
         triple_motifs = 0
