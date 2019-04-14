@@ -71,7 +71,7 @@ def get_rankings_node_feature(array, column_to_order, asc):
 
 
 def get_G_local_clustering(G):
-    G_local_clustering = np.zeros((G.number_of_nodes(), 2))
+    G_local_clustering = np.zeros((max(G.nodes()), 2))
     for k, v in nx.clustering(G).items():
         G_local_clustering[k - 1, 0] = k
         G_local_clustering[k - 1, 1] = v

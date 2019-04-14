@@ -59,7 +59,7 @@ def multiple_processes(nodes, temporal_edges, mode, iterations_limit, t_steps):
     for process_run_id in range(len(iteration_range)):
 
         # Graph initialization
-        G = nx.Graph()
+        G = nx.DiGraph()
         G.add_nodes_from(nodes)
         nx.set_node_attributes(G, False, 'infected')
 
