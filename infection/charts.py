@@ -53,7 +53,7 @@ def infectionProcessChart(for_report, processes_info):
     plt.errorbar(ts, means, yerr=stds, ecolor=secondary_color, color=main_color, linewidth=3)
     plt.xlabel('Time')
     plt.ylabel('# Infected Nodes')
-    plt.xlim(0, 57791)
+    plt.xlim(0, 2500)
     plt.title('Information Spreading Process (N=' + str(processes_info[1].shape[1]) + ')')
     plt.grid(True)
 

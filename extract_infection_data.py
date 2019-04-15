@@ -12,6 +12,6 @@ dataset_options = {
 nodes, edges_per_t = fn.read_graph_from_file(dataset_options[1])
 edges_per_t_day = fn.aggregate_edges_by_granularity(edges_per_t, 'day')
 
-processes_info_G2 = multiple_processes(nodes, edges_per_t_day, 'random', 400, -1)
+processes_info_G2 = multiple_processes(nodes, edges_per_t_day, 'random', 10000, -1)
 
-np.save('infection_data/process_info_hours', processes_info_G2)
+np.save('infection_data/process_info_hours_more', processes_info_G2)
