@@ -5,6 +5,14 @@ import graphviz
 import numpy as np
 import math
 import operator
+from datetime import datetime
+
+
+def find_date_limits(t1, t2):
+    print('from')
+    print(datetime.utcfromtimestamp(int(t1)).strftime('%Y-%m-%d %H:%M:%S'))
+    print('to')
+    print(datetime.utcfromtimestamp(int(t2)).strftime('%Y-%m-%d %H:%M:%S'))
 
 
 def read_graph_from_file(path):
@@ -55,6 +63,25 @@ def generate_weighted_aggregated_graph(nodes, edges_per_t):
     # setup graph
     G.add_nodes_from(nodes)
     G.add_weighted_edges_from([k+(weight_dict[k],) for k in weight_dict.keys()])
+    return G
+
+
+# Function that takes as an input the weighted graphs of each layer
+# and creates a new directed graph with the accumulated weight based on 3-layer weights
+def generate_weighted_total_graph(a2q, a2q_weight, c2q, c2q_weight, c2a, c2a_weight):
+    G = nx.DiGraph()
+    for s, d, e_weight in a2q.edges.data('weight'):
+        G.add_edge(s, d, weight=e_weight*a2q_weight)
+    for e in list(c2q.edges):
+        if e in G.edges:
+            nx.set_edge_attributes(G, {e: {'weight': G.edges[e[0], e[1]]['weight'] + c2q.edges[e[0], e[1]]['weight']*c2q_weight}})
+        else:
+            G.add_edge(e[0], e[1], weight=c2q.edges[e[0], e[1]]['weight']*c2q_weight)
+    for e in list(c2a.edges):
+        if e in G.edges:
+            nx.set_edge_attributes(G, {e: {'weight': G.edges[e[0], e[1]]['weight'] + c2a.edges[e[0], e[1]]['weight']*c2a_weight}})
+        else:
+            G.add_edge(e[0], e[1], weight=c2a.edges[e[0], e[1]]['weight']*c2a_weight)
     return G
 
 
