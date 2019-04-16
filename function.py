@@ -19,7 +19,7 @@ def read_graph_from_file(path):
     edges_per_t = {}
     nodes = []
     with open(path) as file_handle:
-        csv_reader = csv.reader(file_handle, delimiter = ' ')
+        csv_reader = csv.reader(file_handle, delimiter=' ')
         #next(csv_reader) # skipping the header
         for row in csv_reader:  
             a = int(row[0])
@@ -83,6 +83,40 @@ def generate_weighted_total_graph(a2q, a2q_weight, c2q, c2q_weight, c2a, c2a_wei
         else:
             G.add_edge(e[0], e[1], weight=c2a.edges[e[0], e[1]]['weight']*c2a_weight)
     return G
+
+
+# Initializes the user dictionary with keys the ids of the users and as values
+# dictionaries with keys the timestamps in the dataset and values empty strings
+def init_user_dict(nodes_a2q, edges_a2q, nodes_c2q, edges_c2q, nodes_c2a, edges_c2a):
+    user_dict = {}
+    temp = {t: '' for t in sorted(list(map(lambda x: int(x),
+                                    set(list(edges_a2q.keys()) + list(edges_c2q.keys()) + list(edges_c2a.keys())))))}
+    for n in nodes_a2q + nodes_c2q + nodes_c2a:
+        if n not in user_dict.keys():
+            user_dict[n] = temp
+    return user_dict
+
+
+# Creates the user-interaction history dictionary - for each user in the dictionary
+# his interaction history is recorded in another dict
+def create_user_interactions_dict(path, nodes_a2q, edges_a2q, nodes_c2q, edges_c2q, nodes_c2a, edges_c2a):
+    user_dict = init_user_dict(nodes_a2q, edges_a2q, nodes_c2q, edges_c2q, nodes_c2a, edges_c2a)
+    with open(path) as file_handle:
+        csv_reader = csv.reader(file_handle, delimiter=' ')
+        for row in csv_reader:
+            a = int(row[0])
+            b = int(row[1])
+            t = int(row[2])
+            if str(t) in edges_a2q.keys() and (str(a), str(b)) in edges_a2q[str(t)]:
+                user_dict[str(a)][t] = 'giving answer'
+                user_dict[str(b)][t] = 'receiving answer'
+            if str(t) in edges_c2q.keys() and (str(a), str(b)) in edges_c2q[str(t)]:
+                user_dict[str(a)][t] = 'giving comment to question'
+                user_dict[str(b)][t] = 'receiving comment for question'
+            if str(t) in edges_c2a.keys() and (str(a), str(b)) in edges_c2a[str(t)]:
+                user_dict[str(a)][t] = 'giving comment to answer'
+                user_dict[str(b)][t] = 'receiving comment for answer'
+    return user_dict
 
 
 # Computes the degree of each node in the graph
