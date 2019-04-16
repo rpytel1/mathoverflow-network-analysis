@@ -23,8 +23,7 @@ def remove_nodes_from_graph(graph, nodes_to_be_removed):
 
 
 def perform_robustness_test(graph, fraction, nodes_ranking):
-    final_id = math.floor(fraction * len(graph.nodes()))
-    nodes_to_be_removed = nodes_ranking[:final_id]
+    nodes_to_be_removed = get_failed_nodes(graph, fraction, nodes_ranking)
     new_graph = remove_nodes_from_graph(graph, nodes_to_be_removed)
 
     return get_num_active_nodes(new_graph), get_num_of_clusters(new_graph)
@@ -49,9 +48,13 @@ def get_nodes_ordered_by_betweeness(graph, reverse=True):
     return list(ordered_clustering.keys())
 
 
-def make_active_nodes_graph(graph, fraction, nodes_ranking):
+def get_failed_nodes(graph, fraction, nodes_ranking):
     final_id = math.floor(fraction * len(graph.nodes()))
-    nodes_to_be_removed = nodes_ranking[:final_id]
+    return nodes_ranking[:final_id]
+
+
+def make_active_nodes_graph(graph, fraction, nodes_ranking):
+    nodes_to_be_removed = get_failed_nodes(graph, fraction, nodes_ranking)
 
     new_graph = remove_nodes_from_graph(graph, nodes_to_be_removed)
     Gc = max(nx.connected_component_subgraphs(new_graph), key=len)
@@ -68,8 +71,7 @@ def make_active_nodes_graph(graph, fraction, nodes_ranking):
 
 
 def make_failed_nodes_graph(graph, fraction, nodes_ranking):
-    final_id = math.floor(fraction * len(graph.nodes()))
-    nodes_to_be_removed = nodes_ranking[:final_id]
+    nodes_to_be_removed = get_failed_nodes(graph, fraction, nodes_ranking)
 
     final_graph = copy.deepcopy(graph)
 
@@ -88,15 +90,3 @@ def plot_graph_by_attr(G, attr, pos):
     nx.draw(G, pos, node_color='g', node_size=100, with_labels=True)
     nx.draw_networkx_nodes(G, pos, nodelist=nodes_attr_on, node_color='r', node_size=100)
     nx.draw_networkx_nodes(G, pos, nodelist=nodes_attr_off, node_color='g', node_size=50, label='')
-
-
-G = nx.Graph()
-G.add_edge(1, 2)
-G.add_edge(2, 3)
-G.add_edge(1, 4)
-G.add_edge(1, 5)
-G.add_edge(1, 6)
-G.add_edge(2, 5)
-
-node_ranking = get_nodes_ordered_by_betweeness(G)
-print(make_active_nodes_graph(G, 0.2, node_ranking))
