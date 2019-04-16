@@ -1,5 +1,6 @@
 import numpy as np
 import function as fn
+import robustness.util as rb
 
 
 def order_nodes_frac_infected_ranking(processes_info, frac):
@@ -24,16 +25,19 @@ def order_nodes_frac_infected_ranking(processes_info, frac):
 
 
 dataset_options = {
-    1 : 'data/mathoverflow/sx-mathoverflow-a2q.txt',
-    2 : 'data/mathoverflow/sx-mathoverflow-c2q.txt',
-    3 : 'data/mathoverflow/sx-mathoverflow-c2a.txt',
+    1: 'data/mathoverflow/sx-mathoverflow-a2q.txt',
+    2: 'data/mathoverflow/sx-mathoverflow-c2q.txt',
+    3: 'data/mathoverflow/sx-mathoverflow-c2a.txt',
 }
-
 
 nodes, edges_per_t = fn.read_graph_from_file(dataset_options[1])
 
-processes_info_G2=np.load('infection_data/process_info_days.npy')
 G2 = fn.generate_aggregated_graph(nodes, edges_per_t)
 
-G1_ranking_influence = order_nodes_frac_infected_ranking(processes_info_G2, 0.8 * G2.number_of_nodes())
-G1_ranking_influence
+nodes_by_clustering = rb.get_nodes_ordered_by_clustering(G2)
+nodes_by_degree = rb.get_nodes_ordered_by_degree(G2)
+nodes_by_betweeness = rb.get_nodes_ordered_by_betweeness(G2)
+
+print(rb.perform_robustness_test(G2, 0.2, nodes_by_degree))
+print(rb.perform_robustness_test(G2, 0.2, nodes_by_clustering))
+print(rb.perform_robustness_test(G2, 0.2, nodes_by_betweeness))
