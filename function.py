@@ -89,11 +89,10 @@ def generate_weighted_total_graph(a2q, a2q_weight, c2q, c2q_weight, c2a, c2a_wei
 # dictionaries with keys the timestamps in the dataset and values empty strings
 def init_user_dict(nodes_a2q, edges_a2q, nodes_c2q, edges_c2q, nodes_c2a, edges_c2a):
     user_dict = {}
-    temp = {t: '' for t in sorted(list(map(lambda x: int(x),
-                                    set(list(edges_a2q.keys()) + list(edges_c2q.keys()) + list(edges_c2a.keys())))))}
     for n in nodes_a2q + nodes_c2q + nodes_c2a:
         if n not in user_dict.keys():
-            user_dict[n] = temp
+            user_dict[n] = {t: [] for t in sorted(list(map(lambda x: int(x),
+                                    set(list(edges_a2q.keys()) + list(edges_c2q.keys()) + list(edges_c2a.keys())))))}
     return user_dict
 
 
@@ -108,14 +107,32 @@ def create_user_interactions_dict(path, nodes_a2q, edges_a2q, nodes_c2q, edges_c
             b = int(row[1])
             t = int(row[2])
             if str(t) in edges_a2q.keys() and (str(a), str(b)) in edges_a2q[str(t)]:
-                user_dict[str(a)][t] = 'giving answer'
-                user_dict[str(b)][t] = 'receiving answer'
+                if not user_dict[str(a)][t]:
+                    user_dict[str(a)][t] = ['giving answer']
+                else:
+                    user_dict[str(a)][t] += ['giving answer']
+                if not user_dict[str(b)][t]:
+                    user_dict[str(b)][t] = ['receiving answer']
+                else:
+                    user_dict[str(b)][t] += ['receiving answer']
             if str(t) in edges_c2q.keys() and (str(a), str(b)) in edges_c2q[str(t)]:
-                user_dict[str(a)][t] = 'giving comment to question'
-                user_dict[str(b)][t] = 'receiving comment for question'
+                if not user_dict[str(a)][t]:
+                    user_dict[str(a)][t] = ['giving comment to question']
+                else:
+                    user_dict[str(a)][t] += ['giving comment to question']
+                if not user_dict[str(b)][t]:
+                    user_dict[str(b)][t] = ['receiving comment for question']
+                else:
+                    user_dict[str(b)][t] += ['receiving comment for question']
             if str(t) in edges_c2a.keys() and (str(a), str(b)) in edges_c2a[str(t)]:
-                user_dict[str(a)][t] = 'giving comment to answer'
-                user_dict[str(b)][t] = 'receiving comment for answer'
+                if not user_dict[str(a)][t]:
+                    user_dict[str(a)][t] = ['giving comment to answer']
+                else:
+                    user_dict[str(a)][t] += ['giving comment to answer']
+                if not user_dict[str(b)][t]:
+                    user_dict[str(b)][t] = ['receiving comment for answer']
+                else:
+                    user_dict[str(b)][t] += ['receiving comment for answer']
     return user_dict
 
 
@@ -128,8 +145,7 @@ def calculate_interaction_model(user_dict):
                   'giving comment to question': 1,
                   'receiving comment for question': 1.5,
                   'giving comment to answer': 1,
-                  'receiving comment for answer': 1,
-                  '': 0
+                  'receiving comment for answer': 1
                   }
     basic_dict = {}
     cumulative_dict = {}
@@ -139,15 +155,15 @@ def calculate_interaction_model(user_dict):
         last = 0
         for t, activity in dict(sorted(history.items())):
             if user not in activity_dict.keys():
-                if activity != '':
-                    last += 1
+                if activity:
+                    last += len(activity)
                 activity_dict[user] = {t: last}
             else:
-                if activity != '':
-                    last += 1
+                if activity:
+                    last += len(activity)
                 activity_dict[user][t] = last
     for user, history in user_dict.items():
-        basic_dict[user] = {t: weight_map[activity] for t, activity in history.items()}
+        basic_dict[user] = {t: sum(list(map(lambda x: weight_map[x], activity))) for t, activity in history.items()}
         cumulative_dict[user] = {t: 0 if act_weight == 0 else act_weight*a*(1-1/(activity_dict[user][t]+1))
                                  for t, act_weight in basic_dict[user].items()}
         interactions_dict[user] = {t: basic_dict[user][t]+cumulative_dict[user][t] for t in history.keys()}
@@ -183,6 +199,7 @@ def calculate_trust(interactions_dict, interval_dict):
             trust_dict[user][t] = trust_dict[user][last_t]*beta**interval_dict[user][t]+interactions_dict[user][t]
             last_t = t
     return trust_dict
+
 
 # Computes the degree of each node in the graph
 # First column is the id and second is the degree
