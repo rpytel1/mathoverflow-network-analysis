@@ -49,3 +49,54 @@ def get_nodes_ordered_by_betweeness(graph, reverse=True):
     return list(ordered_clustering.keys())
 
 
+def make_active_nodes_graph(graph, fraction, nodes_ranking):
+    final_id = math.floor(fraction * len(graph.nodes()))
+    nodes_to_be_removed = nodes_ranking[:final_id]
+
+    new_graph = remove_nodes_from_graph(graph, nodes_to_be_removed)
+    Gc = max(nx.connected_component_subgraphs(new_graph), key=len)
+
+    nodes_list = Gc.nodes
+    final_graph = copy.deepcopy(graph)
+
+    nx.set_node_attributes(final_graph, True, 'operational')
+    for i in nodes_list:
+        final_graph.nodes()[i]['operational'] = False
+
+    pos = nx.spring_layout(final_graph)
+    plot_graph_by_attr(final_graph, 'operational', pos)
+
+
+def make_failed_nodes_graph(graph, fraction, nodes_ranking):
+    final_id = math.floor(fraction * len(graph.nodes()))
+    nodes_to_be_removed = nodes_ranking[:final_id]
+
+    final_graph = copy.deepcopy(graph)
+
+    nx.set_node_attributes(final_graph, True, 'operational')
+    for i in nodes_to_be_removed:
+        final_graph.nodes()[i]['operational'] = False
+
+    pos = nx.spring_layout(final_graph)
+    plot_graph_by_attr(final_graph, 'operational', pos)
+
+
+def plot_graph_by_attr(G, attr, pos):
+    nodes_attr_on = [x for x, y in G.nodes(data=True) if y[attr] == True]
+    nodes_attr_off = [x for x, y in G.nodes(data=True) if y[attr] == False]
+    # pos = nx.spring_layout(G)
+    nx.draw(G, pos, node_color='g', node_size=100, with_labels=True)
+    nx.draw_networkx_nodes(G, pos, nodelist=nodes_attr_on, node_color='r', node_size=100)
+    nx.draw_networkx_nodes(G, pos, nodelist=nodes_attr_off, node_color='g', node_size=50, label='')
+
+
+G = nx.Graph()
+G.add_edge(1, 2)
+G.add_edge(2, 3)
+G.add_edge(1, 4)
+G.add_edge(1, 5)
+G.add_edge(1, 6)
+G.add_edge(2, 5)
+
+node_ranking = get_nodes_ordered_by_betweeness(G)
+print(make_active_nodes_graph(G, 0.2, node_ranking))
