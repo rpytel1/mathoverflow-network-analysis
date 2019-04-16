@@ -119,6 +119,71 @@ def create_user_interactions_dict(path, nodes_a2q, edges_a2q, nodes_c2q, edges_c
     return user_dict
 
 
+# Creates the interaction value dictionary for each user
+# by aggregating the basic and the cumulative values
+def calculate_interaction_model(user_dict):
+    a = 8  # alpha parameter is the weight of the cumulative part
+    weight_map = {'giving answer': 5,
+                  'receiving answer': 3,
+                  'giving comment to question': 1,
+                  'receiving comment for question': 1.5,
+                  'giving comment to answer': 1,
+                  'receiving comment for answer': 1,
+                  '': 0
+                  }
+    basic_dict = {}
+    cumulative_dict = {}
+    activity_dict = {}
+    interactions_dict = {}
+    for user, history in user_dict.items():
+        last = 0
+        for t, activity in dict(sorted(history.items())):
+            if user not in activity_dict.keys():
+                if activity != '':
+                    last += 1
+                activity_dict[user] = {t: last}
+            else:
+                if activity != '':
+                    last += 1
+                activity_dict[user][t] = last
+    for user, history in user_dict.items():
+        basic_dict[user] = {t: weight_map[activity] for t, activity in history.items()}
+        cumulative_dict[user] = {t: 0 if act_weight == 0 else act_weight*a*(1-1/(activity_dict[user][t]+1))
+                                 for t, act_weight in basic_dict[user].items()}
+        interactions_dict[user] = {t: basic_dict[user][t]+cumulative_dict[user][t] for t in history.keys()}
+    return interactions_dict
+
+
+# Calculates the delta_n value of each user
+# so that frequency of the interactions in a given time period are considered
+def calculate_interval(user_dict):
+    t_a = 86400  # 1 day time space is checked
+    interval_dict = {}
+    for user, history in user_dict.items():
+        last_t = 0
+        for t, activity in dict(sorted(history.items())):
+            if user not in interval_dict.keys():
+                interval_dict[user] = {t: 0}
+            else:
+                interval_dict[user][t] = (t-last_t)/t_a
+            last_t = t
+    return interval_dict
+
+
+# Calculates the trust for each user per timestamp
+# using the interaction and interval dictionaries
+def calculate_trust(interactions_dict, interval_dict):
+    beta = 0.88  # parameter to adjust the forgetting factor
+    trust_dict = {}
+    for user in interactions_dict.keys():
+        trust_dict[user] = {0: 1}  # all users gain a trust of 1 in zero time
+    for user, history in interactions_dict.items():
+        last_t = 0
+        for t, activity in dict(sorted(history.items())):
+            trust_dict[user][t] = trust_dict[user][last_t]*beta**interval_dict[user][t]+interactions_dict[user][t]
+            last_t = t
+    return trust_dict
+
 # Computes the degree of each node in the graph
 # First column is the id and second is the degree
 def get_graph_degrees(G):
