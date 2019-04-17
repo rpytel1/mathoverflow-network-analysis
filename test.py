@@ -33,7 +33,7 @@ dataset_options = {
 nodes, edges_per_t = fn.read_graph_from_file(dataset_options[1])
 
 G2 = fn.generate_aggregated_graph(nodes, edges_per_t)
-
+G2 = G2.to_undirected()
 nodes_by_clustering = rb.get_nodes_ordered_by_clustering(G2)
 nodes_by_degree = rb.get_nodes_ordered_by_degree(G2)
 nodes_by_betweeness = rb.get_nodes_ordered_by_betweeness(G2)
