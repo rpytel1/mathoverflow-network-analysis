@@ -145,6 +145,48 @@ def eigenvector_centrality(t):
         print(spearmanr(merged_df.Views.values, merged_df.EigenvectorCentrality.values))
 
 
+def get_degree_centrality(t='mathoverflow'):
+    """
+    Returns the nodes of the network ranked according to their out-degree
+    centrality, for each of the 3 interactions.
+    :param t: Network's name. Default is MathOverflow
+    :return: Nodes ranked according to closeness centrality.
+    Output form: {'a2q': [(UserId, Out-Degree centrality, ranking), ...], 'c2q': ...}
+    """
+    G_degrees = {}
+    for j in range(1, 4):
+        G_degrees[names[j - 1]] = []
+        G = nx.read_gpickle('pickles/graphs/{0}/{1}.gpickle'.format(t, names[j - 1]))
+        d = G.out_degree(weight='weight')
+        s = len(list(d)) - 1
+        for i, v in G.out_degree(weight='weight'):
+            G_degrees[names[j - 1]].append((i, v / s))
+        G_degrees[names[j - 1]].sort(key=itemgetter(1), reverse=True)
+        for i, v in enumerate(G_degrees[names[j - 1]]):
+            G_degrees[names[j - 1]][i] = (v[0], v[1], i + 1)
+    return G_degrees
+
+
+def get_closeness_centrality(t='mathoverflow'):
+    """
+    Returns the nodes of the network ranked according to their closeness
+    centrality, for each of the 3 interactions.
+    :param t: Network's name. Default is MathOverflow
+    :return: Nodes ranked according to closeness centrality.
+    Output form: {'a2q': [(UserId, Closeness centrality, ranking), ...], 'c2q': ...}
+    """
+    G_cc = {}
+    for j in range(1, 4):
+        G_cc[names[j - 1]] = []
+        with open('centralities/closeness/{0}_{1}_cc.pickle'.format(t, names[j - 1]), 'rb') as handle:
+            cc = pickle.load(handle)
+        for i, v in cc.items():
+            G_cc[names[j - 1]].append((i, v))
+        G_cc[names[j - 1]].sort(key=itemgetter(1), reverse=True)
+        for i, v in enumerate(G_cc[names[j - 1]]):
+            G_cc[names[j - 1]][i] = (v[0], v[1], i + 1)
+    return G_cc
+
 degree_centrality("mathoverflow", degree_type='in')
 degree_centrality("mathoverflow", degree_type='out')
 eigenvector_centrality("mathoverflow")
