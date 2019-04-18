@@ -90,10 +90,10 @@ def degree_centrality(t, degree_type='in'):
 
     for i in range(3):
         temp_reputation_dict = {k: v for k, v in reputation_dict.items() if k in G_degrees[i]}
-        reputation_df = pd.DataFrame(temp_reputation_dict.items(), columns=['UserId', 'Reputation'])
+        reputation_df = pd.DataFrame(list(temp_reputation_dict.items()), columns=['UserId', 'Reputation'])
 
         degree_values_dict = {k: v for k, v in G_degrees[i].items() if k in temp_reputation_dict}
-        degree_values_df = pd.DataFrame(degree_values_dict.items(), columns=['UserId', 'Degree'])
+        degree_values_df = pd.DataFrame(list(degree_values_dict.items()), columns=['UserId', 'Degree'])
 
         merged_df = pd.merge(reputation_df, degree_values_df, on='UserId')
         merged_df.UserId.nunique()
