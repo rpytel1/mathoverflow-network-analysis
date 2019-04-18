@@ -1,8 +1,12 @@
 import copy
 import math
+import operator
 from collections import OrderedDict
 
 import networkx as nx
+import pandas as pd
+import numpy as np
+from operator import itemgetter
 
 
 def get_num_active_nodes(graph):
@@ -90,3 +94,42 @@ def plot_graph_by_attr(G, attr, pos):
     nx.draw(G, pos, node_color='g', node_size=100, with_labels=True)
     nx.draw_networkx_nodes(G, pos, nodelist=nodes_attr_on, node_color='r', node_size=100)
     nx.draw_networkx_nodes(G, pos, nodelist=nodes_attr_off, node_color='g', node_size=50, label='')
+
+
+def get_nodes_ordered_by_reputation(graph):
+    df = pd.read_csv('data/mathoverflow/mathoverflow_dataset.csv')
+    reputation_dict = dict(zip(df.UserId, df.Reputation))
+
+    reputation_dict = OrderedDict(sorted(reputation_dict.items()))
+
+    temp_reputation_dict = {k: v for k, v in reputation_dict.items() if str(k) in graph.nodes}
+    temp_reputation_dict = OrderedDict(sorted(temp_reputation_dict.items(), key=operator.itemgetter(1), reverse=True))
+    #
+    std = np.std(list(temp_reputation_dict.values()))
+    max_value = max(list(temp_reputation_dict.values()))
+    i = 0
+    for v in temp_reputation_dict.values():
+        if v > max_value - 3 * std:
+            i += 1
+
+    return list(temp_reputation_dict.keys()), i / len(graph.nodes())
+
+
+def get_nodes_ordered_by_upvotes(graph):
+    df = pd.read_csv('data/mathoverflow/mathoverflow_dataset.csv')
+    reputation_dict = dict(zip(df.UserId, df.UpVotes))
+
+    reputation_dict = OrderedDict(sorted(reputation_dict.items()))
+
+    temp_reputation_dict = {k: v for k, v in reputation_dict.items() if str(k) in graph.nodes}
+    temp_reputation_dict = OrderedDict(sorted(temp_reputation_dict.items(), key=operator.itemgetter(1), reverse=True))
+    #
+    std = np.std(list(temp_reputation_dict.values()))
+    max_value = max(list(temp_reputation_dict.values()))
+    i = 0
+    for v in temp_reputation_dict.values():
+        if v > max_value - 3 * std:
+            i += 1
+
+    return list(temp_reputation_dict.keys()), i / len(graph.nodes())
+
