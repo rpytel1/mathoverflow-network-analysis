@@ -6,7 +6,6 @@ from collections import OrderedDict
 import networkx as nx
 import pandas as pd
 import numpy as np
-from operator import itemgetter
 
 
 def get_num_active_nodes(graph):
@@ -132,4 +131,3 @@ def get_nodes_ordered_by_upvotes(graph):
             i += 1
 
     return list(temp_reputation_dict.keys()), i / len(graph.nodes())
-

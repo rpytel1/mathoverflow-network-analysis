@@ -88,5 +88,6 @@ __pycache__/
 # Sonarlint plugin
 .idea/sonarlint
 .idea
+infection_data/process_info_hours_more.npy
 
 # End of https://www.gitignore.io/api/pycharm+all
