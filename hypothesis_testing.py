@@ -152,6 +152,54 @@ def eigenvector_centrality(t, ec_type='in'):
         print(spearmanr(merged_df.Views.values, merged_df.EigenvectorCentrality.values))
 
 
+def closeness_reputation(t='mathoverflow', cc_type='in'):
+    if cc_type == 'in':
+        print('\n----------IN Closeness Centrality - Reputation----------\n')
+    else:
+        print('\n----------OUT Closeness Centrality - Reputation----------\n')
+
+    closeness_centrality = [[], [], []]
+    for j in range(1, 4):
+        if cc_type == 'in':
+            with open('centralities/closeness/{0}_{1}_in_cc.pickle'.format(t, names[j - 1]), 'rb') as handle:
+                cc = pickle.load(handle)
+        else:
+            with open('centralities/closeness/{0}_{1}_out_cc.pickle'.format(t, names[j - 1]), 'rb') as handle:
+                cc = pickle.load(handle)
+        for i, v in cc.items():
+            closeness_centrality[j - 1].append([i, v])
+        closeness_centrality[j - 1].sort(key=itemgetter(1), reverse=True)
+        for i, v in enumerate(closeness_centrality[j - 1]):
+            closeness_centrality[j - 1][i] = [v[0], v[1], i + 1]
+
+    df = pd.read_csv('data/mathoverflow/mathoverflow_dataset.csv')
+    reputation_dict = dict(zip(df.UserId, df.Reputation))
+
+    reputation_list = [[k, v] for k, v in reputation_dict.items()]
+    reputation_list.sort(key=itemgetter(1), reverse=True)
+    for i, v in enumerate(reputation_list):
+        reputation_list[i] = [v[0], v[1], i + 1]
+
+    reputation_dict = {int(r[0]): float(r[1]) for r in reputation_list}
+
+    for ind, layer in enumerate(closeness_centrality):
+        closeness_centrality[ind] = {int(r[0]): float(r[1]) for r in layer}
+
+    for i in range(3):
+        temp_reputation_dict = {k: v for k, v in reputation_dict.items() if k in closeness_centrality[i]}
+        reputation_df = pd.DataFrame(temp_reputation_dict.items(), columns=['UserId', 'Reputation'])
+
+        closeness_centrality_dict = {k: v for k, v in closeness_centrality[i].items() if k in temp_reputation_dict}
+        closeness_centrality_df = pd.DataFrame(closeness_centrality_dict.items(),
+                                               columns=['UserId', 'ClosenessCentrality'])
+
+        merged_df = pd.merge(reputation_df, closeness_centrality_df, on='UserId')
+        merged_df.UserId.nunique()
+
+        print('--------------------{}-------------------'.format(names[i]))
+        print(spearmanr(merged_df.Reputation.values, merged_df.ClosenessCentrality.values))
+
+
 def total_degree_centrality(t='mathoverflow', degree_type='in'):
     if degree_type == 'in':
         print('\n----------In-Degree Centrality - Reputation----------\n')
@@ -286,6 +334,50 @@ def total_eigenvector_centrality(t='mathoverflow', ec_type='in'):
     print(spearmanr(merged_df.Views.values, merged_df.EigenvectorCentrality.values))
 
 
+def total_closeness_reputation(t='mathoverflow', cc_type='in'):
+    if cc_type == 'in':
+        print('\n----------IN Closeness Centrality - Reputation----------\n')
+    else:
+        print('\n----------OUT Closeness Centrality - Reputation----------\n')
+    closeness_centrality = []
+    if cc_type == 'in':
+        with open('centralities/closeness/mathoverflow_total_in_cc.pickle', 'rb') as handle:
+            cc = pickle.load(handle)
+    else:
+        with open('centralities/closeness/mathoverflow_total_out_cc.pickle', 'rb') as handle:
+            cc = pickle.load(handle)
+    for i, v in cc.items():
+        closeness_centrality.append([i, v])
+    closeness_centrality.sort(key=itemgetter(1), reverse=True)
+    for i, v in enumerate(closeness_centrality):
+        closeness_centrality[i] = [v[0], v[1], i + 1]
+
+    df = pd.read_csv('data/mathoverflow/mathoverflow_dataset.csv')
+    reputation_dict = dict(zip(df.UserId, df.Reputation))
+
+    reputation_list = [[k, v] for k, v in reputation_dict.items()]
+    reputation_list.sort(key=itemgetter(1), reverse=True)
+    for i, v in enumerate(reputation_list):
+        reputation_list[i] = [v[0], v[1], i + 1]
+
+    reputation_dict = {int(r[0]): float(r[1]) for r in reputation_list}
+
+    closeness_centrality = {int(r[0]): float(r[1]) for r in closeness_centrality}
+
+    temp_reputation_dict = {k: v for k, v in reputation_dict.items() if k in closeness_centrality}
+    reputation_df = pd.DataFrame(temp_reputation_dict.items(), columns=['UserId', 'Reputation'])
+
+    closeness_centrality_dict = {k: v for k, v in closeness_centrality.items() if k in temp_reputation_dict}
+    closeness_centrality_df = pd.DataFrame(closeness_centrality_dict.items(),
+                                           columns=['UserId', 'ClosenessCentrality'])
+
+    merged_df = pd.merge(reputation_df, closeness_centrality_df, on='UserId')
+    merged_df.UserId.nunique()
+
+    print('------------------TOTAL---------------------')
+    print(spearmanr(merged_df.Reputation.values, merged_df.ClosenessCentrality.values))
+
+
 def get_degree_centrality(t='mathoverflow', degree_type='in'):
     """
     Returns the nodes of the network ranked according to their out-degree
@@ -383,20 +475,27 @@ def create_weighted_total_graph():
         pickle.dump(G, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-degree_centrality("mathoverflow", degree_type='in')
-degree_centrality("mathoverflow", degree_type='out')
-eigenvector_centrality("mathoverflow", 'in')
-eigenvector_centrality("mathoverflow", 'out')
-closeness_centrality("mathoverflow", cc_type='in')
-closeness_centrality("mathoverflow", cc_type='out')
-create_weighted_total_graph()
-total_degree_centrality(degree_type='in')
-total_degree_centrality(degree_type='out')
-total_closeness_centrality(cc_type='in')
-total_closeness_centrality(cc_type='out')
-total_eigenvector_centrality(ec_type='in')
-total_eigenvector_centrality(ec_type='out')
-a = get_degree_centrality(degree_type='in')
-b = get_degree_centrality(degree_type='out')
-c = get_closeness_centrality(cc_type='in')
-d = get_closeness_centrality(cc_type='out')
+# degree_centrality("mathoverflow", degree_type='in')
+# degree_centrality("mathoverflow", degree_type='out')
+# eigenvector_centrality("mathoverflow", 'in')
+# eigenvector_centrality("mathoverflow", 'out')
+# closeness_centrality("mathoverflow", cc_type='in')
+# closeness_centrality("mathoverflow", cc_type='out')
+# create_weighted_total_graph()
+# total_degree_centrality(degree_type='in')
+# total_degree_centrality(degree_type='out')
+# total_closeness_centrality(cc_type='in')
+# total_closeness_centrality(cc_type='out')
+# total_eigenvector_centrality(ec_type='in')
+# total_eigenvector_centrality(ec_type='out')
+# a = get_degree_centrality(degree_type='in')
+# b = get_degree_centrality(degree_type='out')
+# c = get_closeness_centrality(cc_type='in')
+# d = get_closeness_centrality(cc_type='out')
+# e = get_eigenvector_centrality(ec_type='in')
+# f = get_eigenvector_centrality(ec_type='out')
+#
+# closeness_reputation(cc_type='in')
+# closeness_reputation(cc_type='out')
+# total_closeness_reputation(cc_type='in')
+# total_closeness_reputation(cc_type='out')
