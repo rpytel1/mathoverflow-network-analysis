@@ -239,3 +239,47 @@ def aggregate_edges_by_granularity(edges_per_t, granularity):
             new_edges[bin_id] = [] + v
     
     return new_edges
+
+
+def make_rich_club_coefficient_chart(rich_dict, filename):
+    y_pos = np.arange(len(rich_dict['out-degree'].keys()))
+    for metric, metric_in_time in rich_dict.items():
+        m = []
+        for metric_dict in metric_in_time.values():
+            m.append(metric_dict['coefficient'])
+        plt.plot(y_pos, m, label=metric)
+    plt.xticks(y_pos[0:len(y_pos):20], [round(metric_dict['nodes']/24818*100,1)
+                                        for ind, metric_dict in rich_dict['out-degree'].items()
+                                         if ind in y_pos[0:len(y_pos):20]])
+    # plt.xticks(rotation=45)
+    plt.xlabel('Fraction of nodes (%)')
+    plt.ylabel('Rich club coefficient')
+    plt.title('Rich club coefficient for 4 metrics')
+    plt.grid(True)
+    plt.legend()
+
+    #plt.show()
+    plt.savefig(filename)
+    plt.clf()
+
+
+def make_rich_club_importance_chart(rich_dict, filename):
+    y_pos = np.arange(len(rich_dict['out-degree'].keys()))
+    for metric, metric_in_time in rich_dict.items():
+        m = []
+        for metric_dict in metric_in_time.values():
+            m.append(metric_dict['importance'])
+        plt.plot(y_pos, m, label=metric)
+    plt.xticks(y_pos[0:len(y_pos):20], [round(metric_dict['nodes']/24818*100,1)
+                                        for ind, metric_dict in rich_dict['out-degree'].items()
+                                         if ind in y_pos[0:len(y_pos):20]])
+    # plt.xticks(rotation=45)
+    plt.xlabel('Fraction of nodes (%)')
+    plt.ylabel('Importance')
+    plt.title('Rich club importance for 4 metrics')
+    plt.grid(True)
+    plt.legend()
+
+    #plt.show()
+    plt.savefig(filename)
+    plt.clf()
