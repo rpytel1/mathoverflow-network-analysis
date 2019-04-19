@@ -8,16 +8,20 @@ import function as fn
 names = ['a2q', 'c2q', 'c2a', 'total']
 
 
-def closeness_centrality(t):
-    print('\n----------Closeness Centrality - UpVotes----------\n')
+def closeness_centrality(t, cc_type='in'):
+    if cc_type == 'in':
+        print('\n----------IN Closeness Centrality - UpVotes----------\n')
+    else:
+        print('\n----------OUT Closeness Centrality - UpVotes----------\n')
+
     closeness_centrality = [[], [], []]
     for j in range(1, 4):
-        with open('centralities/closeness/{0}_{1}_cc.pickle'.format(t, names[j - 1]), 'rb') as handle:
-            cc = pickle.load(handle)
-        # G = nx.read_gpickle('old_pickles/graphs/{0}/{1}.gpickle'.format(t, names[j - 1]))
-        # with open('centralities/{0}_{1}_new_cc.pickle'.format(t, names[j - 1]), 'wb') as handle:
-        #     cc = nx.closeness_centrality(G, distance='1/weight')
-        #     pickle.dump(cc, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        if cc_type == 'in':
+            with open('centralities/closeness/{0}_{1}_in_cc.pickle'.format(t, names[j - 1]), 'rb') as handle:
+                cc = pickle.load(handle)
+        else:
+            with open('centralities/closeness/{0}_{1}_out_cc.pickle'.format(t, names[j - 1]), 'rb') as handle:
+                cc = pickle.load(handle)
         for i, v in cc.items():
             closeness_centrality[j - 1].append([i, v])
         closeness_centrality[j - 1].sort(key=itemgetter(1), reverse=True)
@@ -102,16 +106,18 @@ def degree_centrality(t, degree_type='in'):
         print(spearmanr(merged_df.Reputation.values, merged_df.Degree.values))
 
 
-def eigenvector_centrality(t):
-    print('\n----------Eigenvector Centrality - Views----------\n')
+def eigenvector_centrality(t, ec_type='in'):
+    if ec_type == 'in':
+        print('\n---------- IN EigenVector Centrality - Views----------\n')
+    else:
+        print('\n----------OUT EigenVector Centrality - Views----------\n')
     eigenvector_centrality = [[], [], []]
     for j in range(1, 4):
-        with open('centralities/eigenvector/{0}_{1}_ec.pickle'.format(t, names[j - 1]), 'rb') as handle:
-            ec = pickle.load(handle)
-        # G = nx.read_gpickle('old_pickles/graphs/{0}/{1}.gpickle'.format(t, names[j - 1]))
-        # with open('centralities/{0}_{1}_ec.pickle'.format(t, names[j - 1]), 'wb') as handle:
-        #     ec = nx.eigenvector_centrality(G, weight='weight')
-        #     pickle.dump(ec, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        G = nx.read_gpickle('old_pickles/graphs/{0}/{1}.gpickle'.format(t, names[j - 1]))
+        if ec_type == 'out':
+            ec = nx.eigenvector_centrality(G.reverse(), weight='weight')
+        else:
+            ec = nx.eigenvector_centrality(G, weight='weight')
         for i, v in ec.items():
             eigenvector_centrality[j - 1].append([i, v])
         eigenvector_centrality[j - 1].sort(key=itemgetter(1), reverse=True)
@@ -152,7 +158,7 @@ def total_degree_centrality(t='mathoverflow', degree_type='in'):
     else:
         print('\n----------Out-Degree Centrality - Reputation----------\n')
     G_degrees = []
-    G = nx.read_gpickle('pickles/graphs/mathoverflow/total_0.6666666666666666_1_1.gpickle')
+    G = nx.read_gpickle('pickles/graphs/mathoverflow/total_2_1_3.gpickle')
     if degree_type == 'in':
         d = G.in_degree(weight='weight')
         s = len(list(d)) - 1
@@ -192,11 +198,18 @@ def total_degree_centrality(t='mathoverflow', degree_type='in'):
     print(spearmanr(merged_df.Reputation.values, merged_df.Degree.values))
 
 
-def total_closeness_centrality(t='mathoverflow'):
-    print('\n----------Closeness Centrality - UpVotes----------\n')
+def total_closeness_centrality(t='mathoverflow', cc_type='in'):
+    if cc_type == 'in':
+        print('\n----------IN Closeness Centrality - UpVotes----------\n')
+    else:
+        print('\n----------OUT Closeness Centrality - UpVotes----------\n')
     closeness_centrality = []
-    with open('centralities/closeness/mathoverflow_total_cc.pickle', 'rb') as handle:
-        cc = pickle.load(handle)
+    if cc_type == 'in':
+        with open('centralities/closeness/mathoverflow_total_in_cc.pickle', 'rb') as handle:
+            cc = pickle.load(handle)
+    else:
+        with open('centralities/closeness/mathoverflow_total_out_cc.pickle', 'rb') as handle:
+            cc = pickle.load(handle)
     for i, v in cc.items():
         closeness_centrality.append([i, v])
     closeness_centrality.sort(key=itemgetter(1), reverse=True)
@@ -229,15 +242,18 @@ def total_closeness_centrality(t='mathoverflow'):
     print(spearmanr(merged_df.UpVotes.values, merged_df.ClosenessCentrality.values))
 
 
-def total_eigenvector_centrality(t='mathoverflow'):
-    print('\n----------Eigenvector Centrality - Views----------\n')
+def total_eigenvector_centrality(t='mathoverflow', ec_type='in'):
+    if ec_type == 'in':
+        print('\n----------IN EigenVector Centrality - Views----------\n')
+    else:
+        print('\n----------OUT EigenVector Centrality - Views----------\n')
+
     eigenvector_centrality = []
-    with open('centralities/eigenvector/mathoverflow_total_ec.pickle', 'rb') as handle:
-        ec = pickle.load(handle)
-    # G = nx.read_gpickle('pickles/graphs/mathoverflow/total_1_1_1.gpickle')
-    # with open('centralities/eigenvector/mathoverflow_total_ec.pickle', 'wb') as handle:
-    #     ec = nx.eigenvector_centrality(G, weight='weight')
-    #     pickle.dump(ec, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    G = nx.read_gpickle('pickles/graphs/mathoverflow/total_2_1_3.gpickle')
+    if ec_type == 'out':
+        ec = nx.eigenvector_centrality(G.reverse(), weight='weight')
+    else:
+        ec = nx.eigenvector_centrality(G, weight='weight')
     for i, v in ec.items():
         eigenvector_centrality.append([i, v])
     eigenvector_centrality.sort(key=itemgetter(1), reverse=True)
@@ -270,7 +286,7 @@ def total_eigenvector_centrality(t='mathoverflow'):
     print(spearmanr(merged_df.Views.values, merged_df.EigenvectorCentrality.values))
 
 
-def get_degree_centrality(t='mathoverflow'):
+def get_degree_centrality(t='mathoverflow', degree_type='in'):
     """
     Returns the nodes of the network ranked according to their out-degree
     centrality, for each of the 3 interactions.
@@ -285,17 +301,23 @@ def get_degree_centrality(t='mathoverflow'):
             G = nx.read_gpickle('pickles/graphs/mathoverflow/total_1_1_1.gpickle')
         else:
             G = nx.read_gpickle('pickles/graphs/{0}/{1}.gpickle'.format(t, names[j - 1]))
-        d = G.out_degree(weight='weight')
-        s = len(list(d)) - 1
-        for i, v in G.out_degree(weight='weight'):
-            G_degrees[names[j - 1]].append((i, v / s))
+        if degree_type == 'out':
+            d = G.out_degree(weight='weight')
+            s = len(list(d)) - 1
+            for i, v in G.out_degree(weight='weight'):
+                G_degrees[names[j - 1]].append((i, v / s))
+        else:
+            d = G.in_degree(weight='weight')
+            s = len(list(d)) - 1
+            for i, v in G.in_degree(weight='weight'):
+                G_degrees[names[j - 1]].append((i, v / s))
         G_degrees[names[j - 1]].sort(key=itemgetter(1), reverse=True)
         for i, v in enumerate(G_degrees[names[j - 1]]):
             G_degrees[names[j - 1]][i] = (v[0], v[1], i + 1)
     return G_degrees
 
 
-def get_closeness_centrality(t='mathoverflow'):
+def get_closeness_centrality(t='mathoverflow', cc_type='in'):
     """
     Returns the nodes of the network ranked according to their closeness
     centrality, for each of the 3 interactions.
@@ -307,14 +329,10 @@ def get_closeness_centrality(t='mathoverflow'):
     for j in range(1, 5):
         G_cc[names[j - 1]] = []
         if j == 4:
-            # G = nx.read_gpickle('pickles/graphs/mathoverflow/total_1_1_1.gpickle')
-            # with open('centralities/closeness/mathoverflow_total_cc.pickle'.format(t, names[j - 1]), 'wb') as handle:
-            #     cc = nx.closeness_centrality(G, distance='1/weight')
-            #     pickle.dump(cc, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            with open('centralities/closeness/mathoverflow_total_cc.pickle', 'rb') as handle:
+            with open('centralities/closeness/mathoverflow_total_{}_cc.pickle'.format(cc_type), 'rb') as handle:
                 cc = pickle.load(handle)
         else:
-            with open('centralities/closeness/{0}_{1}_cc.pickle'.format(t, names[j - 1]), 'rb') as handle:
+            with open('centralities/closeness/{0}_{1}_{2}_cc.pickle'.format(t, names[j - 1], cc_type), 'rb') as handle:
                 cc = pickle.load(handle)
         for i, v in cc.items():
             G_cc[names[j - 1]].append((i, v))
@@ -328,21 +346,27 @@ def create_weighted_total_graph():
     a2q = nx.read_gpickle('pickles/graphs/mathoverflow/a2q.gpickle')
     c2q = nx.read_gpickle('pickles/graphs/mathoverflow/c2q.gpickle')
     c2a = nx.read_gpickle('pickles/graphs/mathoverflow/c2a.gpickle')
-    a2q_weight, c2q_weight, c2a_weight = 4 / 6, 1, 1
+    a2q_weight, c2q_weight, c2a_weight = 2, 1, 3
     G = fn.generate_weighted_total_graph(a2q, a2q_weight, c2q, c2q_weight, c2a, c2a_weight)
     with open('pickles/graphs/mathoverflow/total_{0}_{1}_{2}.gpickle'.format(str(a2q_weight), str(c2q_weight),
                                                                              str(c2a_weight)), 'wb') as handle:
         pickle.dump(G, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-# degree_centrality("mathoverflow", degree_type='in')
-# degree_centrality("mathoverflow", degree_type='out')
-# eigenvector_centrality("mathoverflow")
-# closeness_centrality("mathoverflow")
-# create_weighted_total_graph()
-# total_degree_centrality(degree_type='in')
-# total_degree_centrality(degree_type='out')
-# a = get_degree_centrality()
-# b = get_closeness_centrality()
-# total_closeness_centrality()
-# total_eigenvector_centrality()
+degree_centrality("mathoverflow", degree_type='in')
+degree_centrality("mathoverflow", degree_type='out')
+eigenvector_centrality("mathoverflow", 'in')
+eigenvector_centrality("mathoverflow", 'out')
+closeness_centrality("mathoverflow", cc_type='in')
+closeness_centrality("mathoverflow", cc_type='out')
+create_weighted_total_graph()
+total_degree_centrality(degree_type='in')
+total_degree_centrality(degree_type='out')
+total_closeness_centrality(cc_type='in')
+total_closeness_centrality(cc_type='out')
+total_eigenvector_centrality(ec_type='in')
+total_eigenvector_centrality(ec_type='out')
+a = get_degree_centrality(degree_type='in')
+b = get_degree_centrality(degree_type='out')
+c = get_closeness_centrality(cc_type='in')
+d = get_closeness_centrality(cc_type='out')
