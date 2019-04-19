@@ -113,7 +113,7 @@ def eigenvector_centrality(t, ec_type='in'):
         print('\n----------OUT EigenVector Centrality - Views----------\n')
     eigenvector_centrality = [[], [], []]
     for j in range(1, 4):
-        G = nx.read_gpickle('old_pickles/graphs/{0}/{1}.gpickle'.format(t, names[j - 1]))
+        G = nx.read_gpickle('pickles/graphs/{0}/{1}.gpickle'.format(t, names[j - 1]))
         if ec_type == 'out':
             ec = nx.eigenvector_centrality(G.reverse(), weight='weight')
         else:
@@ -249,7 +249,7 @@ def total_eigenvector_centrality(t='mathoverflow', ec_type='in'):
         print('\n----------OUT EigenVector Centrality - Views----------\n')
 
     eigenvector_centrality = []
-    G = nx.read_gpickle('pickles/graphs/mathoverflow/total_2_1_3.gpickle')
+    G = nx.read_gpickle('pickles/graphs/mathoverflow/total_1_1_1.gpickle')
     if ec_type == 'out':
         ec = nx.eigenvector_centrality(G.reverse(), weight='weight')
     else:
@@ -291,6 +291,7 @@ def get_degree_centrality(t='mathoverflow', degree_type='in'):
     Returns the nodes of the network ranked according to their out-degree
     centrality, for each of the 3 interactions.
     :param t: Network's name. Default is MathOverflow
+    :param ec_type: Type of the degree centrality, in-link or out-link
     :return: Nodes ranked according to closeness centrality.
     Output form: {'a2q': [(UserId, Out-Degree centrality, ranking), ...], 'c2q': ...}
     """
@@ -322,6 +323,7 @@ def get_closeness_centrality(t='mathoverflow', cc_type='in'):
     Returns the nodes of the network ranked according to their closeness
     centrality, for each of the 3 interactions.
     :param t: Network's name. Default is MathOverflow
+    :param cc_type: Type of the closeness centrality, for incoming or outward distance
     :return: Nodes ranked according to closeness centrality.
     Output form: {'a2q': [(UserId, Closeness centrality, ranking), ...], 'c2q': ...}
     """
@@ -340,6 +342,34 @@ def get_closeness_centrality(t='mathoverflow', cc_type='in'):
         for i, v in enumerate(G_cc[names[j - 1]]):
             G_cc[names[j - 1]][i] = (v[0], v[1], i + 1)
     return G_cc
+
+
+def get_eigenvector_centrality(t='mathoverflow', ec_type='in'):
+    """
+    Returns the nodes of the network ranked according to their eigenvector
+    centrality, for each of the 3 interactions.
+    :param t: Network's name. Default is MathOverflow
+    :param ec_type: Type of the eigenvector centrality, left(in-edges) or right (out-edges)
+    :return: Nodes ranked according to closeness centrality.
+    Output form: {'a2q': [(UserId, Out-Degree centrality, ranking), ...], 'c2q': ...}
+    """
+    G_ec = {}
+    for j in range(1, 5):
+        G_ec[names[j - 1]] = []
+        if j == 4:
+            G = nx.read_gpickle('pickles/graphs/mathoverflow/total_1_1_1.gpickle')
+        else:
+            G = nx.read_gpickle('pickles/graphs/{0}/{1}.gpickle'.format(t, names[j - 1]))
+        if ec_type == 'out':
+            ec = nx.eigenvector_centrality(G.reverse(), weight='weight')
+        else:
+            ec = nx.eigenvector_centrality(G, weight='weight')
+        for i, v in ec.items():
+            G_ec[names[j - 1]].append((i, v))
+        G_ec[names[j - 1]].sort(key=itemgetter(1), reverse=True)
+        for i, v in enumerate(G_ec[names[j - 1]]):
+            G_ec[names[j - 1]][i] = (v[0], v[1], i + 1)
+    return G_ec
 
 
 def create_weighted_total_graph():
