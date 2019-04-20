@@ -8,6 +8,41 @@ import function as fn
 names = ['a2q', 'c2q', 'c2a', 'total']
 
 
+def modeling_ranking(metric='Reputation'):
+    print('\n ----------{}---------- \n'.format(metric))
+    ranking = []
+    with open('modelling/final_modelled_score.pickle', 'rb') as handle:
+        r = pickle.load(handle)
+    for i, v in r.items():
+        ranking.append([i, v])
+    ranking.sort(key=itemgetter(1), reverse=True)
+    for i, v in enumerate(ranking):
+        ranking[i] = [v[0], v[1], i + 1]
+
+    df = pd.read_csv('data/mathoverflow/mathoverflow_dataset.csv')
+    metric_dict = dict(zip(df.UserId, df[metric]))
+
+    metric_list = [[k, v] for k, v in metric_dict.items()]
+    metric_list.sort(key=itemgetter(1), reverse=True)
+    for i, v in enumerate(metric_list):
+        metric_list[i] = [v[0], v[1], i + 1]
+
+    metric_dict = {int(r[0]): float(r[1]) for r in metric_list}
+
+    ranking = {int(r[0]): float(r[1]) for r in ranking}
+
+    temp_metric_dict = {k: v for k, v in metric_dict.items() if k in ranking}
+    metric_df = pd.DataFrame(temp_metric_dict.items(), columns=['UserId', metric])
+
+    ranking_dict = {k: v for k, v in ranking.items() if k in temp_metric_dict}
+    ranking_df = pd.DataFrame(ranking_dict.items(),
+                                           columns=['UserId', 'ModelRanking'])
+
+    merged_df = pd.merge(metric_df, ranking_df, on='UserId')
+    merged_df.UserId.nunique()
+    print(spearmanr(merged_df[metric].values, merged_df.ModelRanking.values))
+
+
 def closeness_centrality(t, cc_type='in'):
     if cc_type == 'in':
         print('\n----------IN Closeness Centrality - UpVotes----------\n')
@@ -474,7 +509,6 @@ def create_weighted_total_graph():
                                                                              str(c2a_weight)), 'wb') as handle:
         pickle.dump(G, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-
 # degree_centrality("mathoverflow", degree_type='in')
 # degree_centrality("mathoverflow", degree_type='out')
 # eigenvector_centrality("mathoverflow", 'in')
@@ -499,3 +533,8 @@ def create_weighted_total_graph():
 # closeness_reputation(cc_type='out')
 # total_closeness_reputation(cc_type='in')
 # total_closeness_reputation(cc_type='out')
+
+# use this to compute the correlation between the ranking
+# of the modeling and the metrics in the list
+for metric in ['Reputation', 'ViewCount', 'UpVotes']:
+    modeling_ranking(metric)
