@@ -2,6 +2,15 @@ import function as fn
 import pickle
 
 
+# Produces the final score for each user at the last day
+# of recording
+def get_final_ranking(trust_dict):
+    rank_dict = {}
+    for user, history in trust_dict.items():
+        rank_dict[user] = history[max(list(map(lambda x: int(x), list(history.keys()))))]
+    return rank_dict
+
+
 file = open(r'C:\Users\Vasilis\PycharmProjects\mathoverflow-network-analysis\pickles\myEdges\mathoverflow\a2q.pkl', 'rb')
 nodes_a2q = pickle.load(file)
 edges_a2q = pickle.load(file)
@@ -18,7 +27,7 @@ edges_c2a = pickle.load(file)
 file.close()
 
 path = r'C:\Users\Vasilis\PycharmProjects\mathoverflow-network-analysis\data\mathoverflow\sx-mathoverflow.txt'
-filename = r'modelling/first_attempt_out_degree.png'
+filename = r'modelling/second_attempt_out_degree.png'
 
 print('Creating user dictionary...')
 user_dict = fn.create_user_interactions_dict(path, nodes_a2q, edges_a2q, nodes_c2q, edges_c2q, nodes_c2a, edges_c2a)
@@ -26,6 +35,9 @@ print('Setting up the model...')
 interactions_dict = fn.calculate_interaction_model(user_dict)
 interval_dict = fn.calculate_interval(user_dict)
 trust_dict = fn.calculate_trust(interactions_dict, interval_dict)
+filehandler = open("modelling/final_modelled_score.pickle", "wb")
+pickle.dump(get_final_ranking(trust_dict), filehandler)
+filehandler.close()
 print('Initiating timestamps...')
 timestamps = fn.initiate_timestamps(edges_a2q, edges_c2q, edges_c2a)
 print('Creating the metric dictionaries...')
