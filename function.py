@@ -248,9 +248,9 @@ def make_rich_club_coefficient_chart(rich_dict, filename):
         for metric_dict in metric_in_time.values():
             m.append(metric_dict['coefficient'])
         plt.plot(y_pos, m, label=metric)
-    plt.xticks(y_pos[0:len(y_pos):20], [round(metric_dict['nodes']/24818*100,1)
+    plt.xticks(y_pos[0:len(y_pos):10], [round(metric_dict['nodes']/24818*100,1)
                                         for ind, metric_dict in rich_dict['out-degree'].items()
-                                         if ind in y_pos[0:len(y_pos):20]])
+                                         if ind in y_pos[0:len(y_pos):10]])
     # plt.xticks(rotation=45)
     plt.xlabel('Fraction of nodes (%)')
     plt.ylabel('Rich club coefficient')
@@ -270,9 +270,9 @@ def make_rich_club_importance_chart(rich_dict, filename):
         for metric_dict in metric_in_time.values():
             m.append(metric_dict['importance'])
         plt.plot(y_pos, m, label=metric)
-    plt.xticks(y_pos[0:len(y_pos):20], [round(metric_dict['nodes']/24818*100,1)
+    plt.xticks(y_pos[0:len(y_pos):10], [round(metric_dict['nodes']/24818*100,1)
                                         for ind, metric_dict in rich_dict['out-degree'].items()
-                                         if ind in y_pos[0:len(y_pos):20]])
+                                         if ind in y_pos[0:len(y_pos):10]])
     # plt.xticks(rotation=45)
     plt.xlabel('Fraction of nodes (%)')
     plt.ylabel('Importance')

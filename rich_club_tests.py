@@ -82,7 +82,7 @@ def find_rich_coeff(G_total, num_of_nodes):
         print('Now processing', check)
         # std = statistics.stdev([d[1] for d in metric_tuples])
         # rich_nodes = [d for d in metric_tuples if abs(d[1]-metric_tuples[0][1]) <= 45*std]
-        for ind, i in enumerate(list(np.linspace(0.001, 0.4, 200))):
+        for ind, i in enumerate(list(np.linspace(0.001, 0.25, 100))):
             print(ind)
             rich_nodes = metric_tuples[0:int(i * num_of_nodes)]
             # percentiles = list_to_percentiles([d[1] for d in metric_tuples])
@@ -101,13 +101,13 @@ def find_rich_coeff(G_total, num_of_nodes):
                                      'coefficient': round(rich_club_coeff, 4),
                                      'importance': round(importance, 4)
                                      }
-    filehandler = open("rich_club/rich_club_recordings_zoomed.pickle", "wb")
+    filehandler = open("rich_club/rich_club_recordings_more_zoomed.pickle", "wb")
     pickle.dump(rich_dict, filehandler)
     filehandler.close()
 
 
 def print_rich_club_graphs(filename1, filename2):
-    filehandler = open("rich_club/rich_club_recordings_zoomed.pickle", "rb")
+    filehandler = open("rich_club/rich_club_recordings_more_zoomed.pickle", "rb")
     rich_dict = pickle.load(filehandler)
     filehandler.close()
     fn.make_rich_club_coefficient_chart(rich_dict, filename1)
@@ -124,9 +124,9 @@ num_of_nodes = G_total.number_of_nodes()
 # print('Pure answers to questions:', a2q.number_of_edges())
 # print('Pure comments to questions:', c2q.number_of_edges())
 # print('Pure comments to answers:', c2a.number_of_edges())
-find_rich_coeff(G_total, num_of_nodes)
-filename1 = 'rich_club/rich_coefficient_graph_zoomed.png'
-filename2 = 'rich_club/rich_importance_graph_zoomed.png'
+# find_rich_coeff(G_total, num_of_nodes)
+filename1 = 'rich_club/rich_coefficient_graph_more_zoomed.png'
+filename2 = 'rich_club/rich_importance_graph_more_zoomed.png'
 print_rich_club_graphs(filename1, filename2)
 # print('rich club coefficient:', rich_club_coeff)
 # nx.draw_networkx(undirected_rich_G, pos=nx.random_layout(undirected_rich_G), arrowsize=5,
