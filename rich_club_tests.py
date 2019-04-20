@@ -107,7 +107,7 @@ def find_rich_coeff(G_total, num_of_nodes):
 
 
 def print_rich_club_graphs(filename1, filename2):
-    filehandler = open("rich_club/rich_club_recordings_more_zoomed.pickle", "rb")
+    filehandler = open("rich_club/rich_club_recordings.pickle", "rb")
     rich_dict = pickle.load(filehandler)
     filehandler.close()
     fn.make_rich_club_coefficient_chart(rich_dict, filename1)
@@ -125,8 +125,8 @@ num_of_nodes = G_total.number_of_nodes()
 # print('Pure comments to questions:', c2q.number_of_edges())
 # print('Pure comments to answers:', c2a.number_of_edges())
 # find_rich_coeff(G_total, num_of_nodes)
-filename1 = 'rich_club/rich_coefficient_graph_more_zoomed.png'
-filename2 = 'rich_club/rich_importance_graph_more_zoomed.png'
+filename1 = 'rich_club/rich_coefficient_graph.png'
+filename2 = 'rich_club/rich_importance_graph.png'
 print_rich_club_graphs(filename1, filename2)
 # print('rich club coefficient:', rich_club_coeff)
 # nx.draw_networkx(undirected_rich_G, pos=nx.random_layout(undirected_rich_G), arrowsize=5,

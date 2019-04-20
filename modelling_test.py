@@ -1,0 +1,38 @@
+import function as fn
+import pickle
+
+
+file = open(r'C:\Users\Vasilis\PycharmProjects\mathoverflow-network-analysis\pickles\myEdges\mathoverflow\a2q.pkl', 'rb')
+nodes_a2q = pickle.load(file)
+edges_a2q = pickle.load(file)
+file.close()
+
+file = open(r'C:\Users\Vasilis\PycharmProjects\mathoverflow-network-analysis\pickles\myEdges\mathoverflow\c2q.pkl', 'rb')
+nodes_c2q = pickle.load(file)
+edges_c2q = pickle.load(file)
+file.close()
+
+file = open(r'C:\Users\Vasilis\PycharmProjects\mathoverflow-network-analysis\pickles\myEdges\mathoverflow\c2a.pkl', 'rb')
+nodes_c2a = pickle.load(file)
+edges_c2a = pickle.load(file)
+file.close()
+
+path = r'C:\Users\Vasilis\PycharmProjects\mathoverflow-network-analysis\data\mathoverflow\sx-mathoverflow.txt'
+filename = r'modelling/first_attempt_out_degree.png'
+
+print('Creating user dictionary...')
+user_dict = fn.create_user_interactions_dict(path, nodes_a2q, edges_a2q, nodes_c2q, edges_c2q, nodes_c2a, edges_c2a)
+print('Setting up the model...')
+interactions_dict = fn.calculate_interaction_model(user_dict)
+interval_dict = fn.calculate_interval(user_dict)
+trust_dict = fn.calculate_trust(interactions_dict, interval_dict)
+print('Initiating timestamps...')
+timestamps = fn.initiate_timestamps(edges_a2q, edges_c2q, edges_c2a)
+print('Creating the metric dictionaries...')
+degree_dict, in_degree_dict, out_degree_dict = fn.calculate_degree_per_time(user_dict)
+print('Aggregating per day...')
+aggregated_degree_dict = fn.aggregate_user_dict_by_granularity(out_degree_dict, 'day', timestamps)
+aggregated_trust_dict = fn.aggregate_user_dict_by_granularity(trust_dict, 'day', timestamps)
+binned_timestamps = fn.aggregate_timestamps_by_granularity(timestamps, 'day')
+print('Making the charts...')
+fn.make_modelled_trust_chart(aggregated_degree_dict, aggregated_trust_dict, binned_timestamps, filename)
