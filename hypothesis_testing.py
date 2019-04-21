@@ -8,11 +8,11 @@ import function as fn
 names = ['a2q', 'c2q', 'c2a', 'total']
 
 
-def modeling_ranking(metric='Reputation'):
+def modeling_ranking(r, metric='Reputation'):
     print('\n ----------{}---------- \n'.format(metric))
     ranking = []
-    with open('modelling/final_modelled_score.pickle', 'rb') as handle:
-        r = pickle.load(handle)
+    # with open('modelling/final_modelled_score.pickle', 'rb') as handle:
+    #     r = pickle.load(handle)
     for i, v in r.items():
         ranking.append([i, v])
     ranking.sort(key=itemgetter(1), reverse=True)
@@ -32,11 +32,10 @@ def modeling_ranking(metric='Reputation'):
     ranking = {int(r[0]): float(r[1]) for r in ranking}
 
     temp_metric_dict = {k: v for k, v in metric_dict.items() if k in ranking}
-    metric_df = pd.DataFrame(temp_metric_dict.items(), columns=['UserId', metric])
+    metric_df = pd.DataFrame(list(temp_metric_dict.items()), columns=['UserId', metric])
 
     ranking_dict = {k: v for k, v in ranking.items() if k in temp_metric_dict}
-    ranking_df = pd.DataFrame(ranking_dict.items(),
-                                           columns=['UserId', 'ModelRanking'])
+    ranking_df = pd.DataFrame(list(ranking_dict.items()), columns=['UserId', 'ModelRanking'])
 
     merged_df = pd.merge(metric_df, ranking_df, on='UserId')
     merged_df.UserId.nunique()
@@ -536,5 +535,5 @@ def create_weighted_total_graph():
 
 # use this to compute the correlation between the ranking
 # of the modeling and the metrics in the list
-for metric in ['Reputation', 'ViewCount', 'UpVotes']:
-    modeling_ranking(metric)
+# for metric in ['Reputation', 'ViewCount', 'UpVotes']:
+#     modeling_ranking(metric)

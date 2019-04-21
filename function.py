@@ -172,13 +172,13 @@ def calculate_degree_per_time(user_dict):
 # Creates the interaction value dictionary for each user
 # by aggregating the basic and the cumulative values
 def calculate_interaction_model(user_dict):
-    a = 1.5  # alpha parameter is the weight of the cumulative part
-    weight_map = {'giving answer': 4.8,
-                  'receiving answer': 4.7,
-                  'giving comment to question': 5.9,
-                  'receiving comment for question': 3.7,
-                  'giving comment to answer': 6.2,
-                  'receiving comment for answer': 4.8
+    a = 0.5  # alpha parameter is the weight of the cumulative part
+    weight_map = {'giving answer': 0.48,
+                  'receiving answer': 0.47,
+                  'giving comment to question': 0.59,
+                  'receiving comment for question': 0.37,
+                  'giving comment to answer': 0.62,
+                  'receiving comment for answer': 0.48
                   }
     basic_dict = {}
     cumulative_dict = {}
@@ -203,7 +203,7 @@ def calculate_interaction_model(user_dict):
 # Calculates the delta_n value of each user
 # so that frequency of the interactions in a given time period are considered
 def calculate_interval(user_dict):
-    t_a = 86400  # 1 day time space is checked
+    t_a = 30*86400  # 1 day time space is checked
     interval_dict = {}
     for user, history in user_dict.items():
         last_t = 0
@@ -281,7 +281,7 @@ def make_modelled_trust_chart(metric_dict, trust_dict, binned_timestamps, filena
     plt.xticks(y_pos[0:len(y_pos):200], y_pos[0:len(y_pos):200])
     # plt.xticks(rotation=45)
     plt.xlabel('Days')
-    plt.ylabel('Users\' aggregated degree and reputation per day')
+    # plt.ylabel('Users\' aggregated degree and reputation per day')
     plt.title('Degree and Modelled Reputation through time')
     plt.grid(True)
     plt.legend()
