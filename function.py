@@ -173,12 +173,12 @@ def calculate_degree_per_time(user_dict):
 # by aggregating the basic and the cumulative values
 def calculate_interaction_model(user_dict):
     a = 1.6  # alpha parameter is the weight of the cumulative part
-    weight_map = {'giving answer': 0.4823,
-                  'receiving answer': 0.4713,
-                  'giving comment to question': 0.5870,
-                  'receiving comment for question': 0.3744,
-                  'giving comment to answer': 0.6156,
-                  'receiving comment for answer': 0.4832
+    weight_map = {'giving answer': 0.5,
+                  'receiving answer': 0.5,
+                  'giving comment to question': 0.6,
+                  'receiving comment for question': 0.4,
+                  'giving comment to answer': 0.6,
+                  'receiving comment for answer': 0.5
                   }
     basic_dict = {}
     cumulative_dict = {}

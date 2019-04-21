@@ -12,24 +12,24 @@ def get_final_ranking(trust_dict):
     return rank_dict
 
 
-file = open(r'C:\Users\Vasilis\PycharmProjects\mathoverflow-network-analysis\pickles\myEdges\mathoverflow\a2q.pkl', 'rb')
+file = open(r'pickles/myEdges/mathoverflow/a2q.pkl', 'rb')
 nodes_a2q = pickle.load(file)
 edges_a2q = pickle.load(file)
 file.close()
 
-file = open(r'C:\Users\Vasilis\PycharmProjects\mathoverflow-network-analysis\pickles\myEdges\mathoverflow\c2q.pkl', 'rb')
+file = open(r'pickles/myEdges/mathoverflow/c2q.pkl', 'rb')
 nodes_c2q = pickle.load(file)
 edges_c2q = pickle.load(file)
 file.close()
 
-file = open(r'C:\Users\Vasilis\PycharmProjects\mathoverflow-network-analysis\pickles\myEdges\mathoverflow\c2a.pkl', 'rb')
+file = open(r'pickles/myEdges/mathoverflow/c2a.pkl', 'rb')
 nodes_c2a = pickle.load(file)
 edges_c2a = pickle.load(file)
 file.close()
 
-path = r'C:\Users\Vasilis\PycharmProjects\mathoverflow-network-analysis\data\mathoverflow\sx-mathoverflow.txt'
+path = r'data/mathoverflow/sx-mathoverflow.txt'
 # filename = r'modelling/best/second_attempt_degree.png'
-filename = r'modelling/second_right_attempt_degree.png'
+filename = r'modelling/third_right_attempt_degree.png'
 
 print('Creating user dictionary...')
 user_dict = fn.create_user_interactions_dict(path, nodes_a2q, edges_a2q, nodes_c2q, edges_c2q, nodes_c2a, edges_c2a)
