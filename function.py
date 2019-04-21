@@ -172,7 +172,7 @@ def calculate_degree_per_time(user_dict):
 # Creates the interaction value dictionary for each user
 # by aggregating the basic and the cumulative values
 def calculate_interaction_model(user_dict):
-    a = 1.4  # alpha parameter is the weight of the cumulative part
+    a = 1.6  # alpha parameter is the weight of the cumulative part
     weight_map = {'giving answer': 0.4823,
                   'receiving answer': 0.4713,
                   'giving comment to question': 0.5870,
@@ -241,7 +241,10 @@ def aggregate_user_dict_by_granularity(user_dict, granularity, timestamps):
     for user, history in user_dict.items():
         for t, activity in dict(sorted(history.items())).items():
             bin_id = math.floor((float(t) - float(min_t))/granularity_factor)
-            aggregated_dict[user] = {bin_id: activity}
+            if user in aggregated_dict.keys():
+                aggregated_dict[user][bin_id] = activity
+            else:
+                aggregated_dict[user] = {bin_id: activity}
     return aggregated_dict
 
 
@@ -261,28 +264,49 @@ def aggregate_timestamps_by_granularity(timestamps, granularity):
     return binned_timestamps
 
 
-def make_modelled_trust_chart(metric_dict, trust_dict, binned_timestamps, filename):
+def make_modelled_trust_chart(metric_dict, trust_dict, binned_timestamps, best_nodes, filename):
     y_pos = np.arange(max(binned_timestamps.keys())+1)
     for ind, dict_in_check in enumerate([metric_dict, trust_dict]):
         m = [0]*(max(binned_timestamps.keys())+1)
-        last_t = {i: 0 for i in metric_dict.keys()}
-        for t in range(0, max(binned_timestamps.keys())+1):
-            for user, history in dict_in_check.items():
-                if t in history.keys():
-                    m[t] += history[t]
-                    last_t[user] = t
-                else:
-                    if last_t[user] != 0:
-                        m[t] += history[last_t[user]]
-        if not ind:
-            plt.plot(y_pos, m, label='degree')
+        if not best_nodes:
+            last_t = {i: 0 for i in metric_dict.keys()}
         else:
-            plt.plot(y_pos, m, label='modelled trust')
+            last_t = {i: 0 for i in metric_dict.keys() if i in best_nodes}
+        for t in range(0, max(binned_timestamps.keys())+1):
+            if not best_nodes:
+                for user, history in dict_in_check.items():
+                    if t in history.keys():
+                        m[t] += history[t]
+                        last_t[user] = t
+                    else:
+                        if last_t[user] != 0:
+                            m[t] += history[last_t[user]]
+            else:
+                for user in best_nodes:
+                    if t in dict_in_check[user].keys():
+                        m[t] += dict_in_check[user][t]
+                        last_t[user] = t
+                    else:
+                        if last_t[user] != 0:
+                            m[t] += dict_in_check[user][last_t[user]]
+        if not best_nodes:
+            if not ind:
+                plt.plot(y_pos, m, label='degree')
+            else:
+                plt.plot(y_pos, m, label='modelled trust')
+        else:
+            if not ind:
+                plt.plot(y_pos, list(map(lambda x: x/len(best_nodes), m)), label='average degree')
+            else:
+                plt.plot(y_pos, list(map(lambda x: x/len(best_nodes), m)), label='average modelled trust')
     plt.xticks(y_pos[0:len(y_pos):200], y_pos[0:len(y_pos):200])
     # plt.xticks(rotation=45)
     plt.xlabel('Days')
     # plt.ylabel('Users\' aggregated degree and reputation per day')
-    plt.title('Degree and Modelled Trust through time')
+    if not best_nodes:
+        plt.title('Degree and Modelled Trust through time')
+    else:
+        plt.title('Degree and Modelled Trust through time for best 100users')
     plt.grid(True)
     plt.legend()
 
