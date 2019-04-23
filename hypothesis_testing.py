@@ -469,6 +469,30 @@ def get_closeness_centrality(t='mathoverflow', cc_type='in'):
             G_cc[names[j - 1]][i] = (v[0], v[1], i + 1)
     return G_cc
 
+def get_eigenvector_centralities(t='mathoverflow'):
+    """
+    Returns the nodes of the network ranked according to eignevector centrality,
+     for each of the 3 interactions.
+    :param t: Network's name. Default is MathOverflow
+    :return: Nodes ranked according to eigenvector centrality.
+    Output form: {'a2q': [(UserId, Eigenvector centrality, ranking), ...], 'c2q': ...}
+    """
+    G_cc = {}
+    for j in range(1, 5):
+        G_cc[names[j - 1]] = []
+        if j == 4:
+            with open('centralities/eigenvector/mathoverflow_total_ec.pickle'.format(), 'rb') as handle:
+                cc = pickle.load(handle)
+        else:
+            with open('centralities/eigenvector/{0}_{1}_ec.pickle'.format(t, names[j - 1]), 'rb') as handle:
+                cc = pickle.load(handle)
+        for i, v in cc.items():
+            G_cc[names[j - 1]].append((i, v))
+        G_cc[names[j - 1]].sort(key=itemgetter(1), reverse=True)
+        for i, v in enumerate(G_cc[names[j - 1]]):
+            G_cc[names[j - 1]][i] = (v[0], v[1], i + 1)
+    return G_cc
+
 
 def get_eigenvector_centrality(t='mathoverflow', ec_type='in'):
     """
@@ -508,6 +532,10 @@ def create_weighted_total_graph():
                                                                              str(c2a_weight)), 'wb') as handle:
         pickle.dump(G, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 # degree_centrality("mathoverflow", degree_type='in')
 # degree_centrality("mathoverflow", degree_type='out')
 # eigenvector_centrality("mathoverflow", 'in')
@@ -523,6 +551,7 @@ def create_weighted_total_graph():
 # total_eigenvector_centrality(ec_type='out')
 # a = get_degree_centrality(degree_type='in')
 # b = get_degree_centrality(degree_type='out')
+<<<<<<< Updated upstream
 # c = get_closeness_centrality(cc_type='in')
 # d = get_closeness_centrality(cc_type='out')
 # e = get_eigenvector_centrality(ec_type='in')
@@ -537,3 +566,5 @@ def create_weighted_total_graph():
 # of the modeling and the metrics in the list
 # for metric in ['Reputation', 'ViewCount', 'UpVotes']:
 #     modeling_ranking(metric)
+=======
+>>>>>>> Stashed changes
