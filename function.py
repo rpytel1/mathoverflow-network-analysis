@@ -144,16 +144,41 @@ def create_user_interactions_dict(path, nodes_a2q, edges_a2q, nodes_c2q, edges_c
     return user_dict
 
 
+# Calculates the accumulative degree (in and out) of each user
+# per timestep of active interaction
+def calculate_degree_per_time(user_dict):
+    degree_dict = {}
+    in_degree_dict = {}
+    out_degree_dict = {}
+    for user, history in user_dict.items():
+        last = 0
+        last_in = 0
+        last_out = 0
+        for t, activity in dict(sorted(history.items())).items():
+            last += len(activity)
+            last_in += len([a for a in activity if a.startswith('receiving')])
+            last_out += len([a for a in activity if a.startswith('giving')])
+            if user not in degree_dict.keys():
+                degree_dict[user] = {t: last}
+                in_degree_dict[user] = {t: last_in}
+                out_degree_dict[user] = {t: last_out}
+            else:
+                degree_dict[user][t] = last
+                in_degree_dict[user][t] = last_in
+                out_degree_dict[user][t] = last_out
+    return degree_dict, in_degree_dict, out_degree_dict
+
+
 # Creates the interaction value dictionary for each user
 # by aggregating the basic and the cumulative values
 def calculate_interaction_model(user_dict):
-    a = 8  # alpha parameter is the weight of the cumulative part
-    weight_map = {'giving answer': 5,
-                  'receiving answer': 3,
-                  'giving comment to question': 1,
-                  'receiving comment for question': 1.5,
-                  'giving comment to answer': 1,
-                  'receiving comment for answer': 1
+    a = 1.6  # alpha parameter is the weight of the cumulative part
+    weight_map = {'giving answer': 0.5,
+                  'receiving answer': 0.5,
+                  'giving comment to question': 0.6,
+                  'receiving comment for question': 0.4,
+                  'giving comment to answer': 0.6,
+                  'receiving comment for answer': 0.5
                   }
     basic_dict = {}
     cumulative_dict = {}
@@ -178,7 +203,7 @@ def calculate_interaction_model(user_dict):
 # Calculates the delta_n value of each user
 # so that frequency of the interactions in a given time period are considered
 def calculate_interval(user_dict):
-    t_a = 86400  # 1 day time space is checked
+    t_a = 30*86400  # 1 month time space is checked
     interval_dict = {}
     for user, history in user_dict.items():
         last_t = 0
@@ -194,7 +219,7 @@ def calculate_interval(user_dict):
 # Calculates the trust for each user per timestamp
 # using the interaction and interval dictionaries
 def calculate_trust(interactions_dict, interval_dict):
-    beta = 0.88  # parameter to adjust the forgetting factor
+    beta = 0.99  # parameter to adjust the forgetting factor
     trust_dict = {}
     for user in interactions_dict.keys():
         trust_dict[user] = {0: 1}  # all users gain a trust of 1 in zero time
@@ -204,6 +229,90 @@ def calculate_trust(interactions_dict, interval_dict):
             trust_dict[user][t] = trust_dict[user][last_t]*beta**interval_dict[user][t]+interactions_dict[user][t]
             last_t = t
     return trust_dict
+
+
+# Aggregates the activity of each user for the given granularity factor
+# by keeping the latest value that the user reported in the granularity bin
+def aggregate_user_dict_by_granularity(user_dict, granularity, timestamps):
+    aggregated_dict = {}
+    granularity_factor = 1 if granularity == 'sec' else 60 if granularity == 'min' else 3600 if granularity == 'hour' \
+        else 3600 * 24
+    min_t = min([k for k in list(map(lambda x: int(x), list(timestamps.keys()))) if k != 0])
+    for user, history in user_dict.items():
+        for t, activity in dict(sorted(history.items())).items():
+            bin_id = math.floor((float(t) - float(min_t))/granularity_factor)
+            if user in aggregated_dict.keys():
+                aggregated_dict[user][bin_id] = activity
+            else:
+                aggregated_dict[user] = {bin_id: activity}
+    return aggregated_dict
+
+
+# Aggregates the timestamps appearing in the dataset by
+# the given granularity factor
+def aggregate_timestamps_by_granularity(timestamps, granularity):
+    binned_timestamps = {}
+    granularity_factor = 1 if granularity == 'sec' else 60 if granularity == 'min' else 3600 if granularity == 'hour' \
+        else 3600 * 24
+    min_t = min([k for k in list(map(lambda x: int(x), list(timestamps.keys()))) if k != 0])
+    for t, ind in dict(sorted(timestamps.items())).items():
+        bin_id = math.floor((float(t) - float(min_t))/granularity_factor)
+        if bin_id not in binned_timestamps.keys():
+            binned_timestamps[bin_id] = 1
+        else:
+            binned_timestamps[bin_id] += 1
+    return binned_timestamps
+
+
+def make_modelled_trust_chart(metric_dict, trust_dict, binned_timestamps, best_nodes, filename):
+    y_pos = np.arange(max(binned_timestamps.keys())+1)
+    for ind, dict_in_check in enumerate([metric_dict, trust_dict]):
+        m = [0]*(max(binned_timestamps.keys())+1)
+        if not best_nodes:
+            last_t = {i: 0 for i in metric_dict.keys()}
+        else:
+            last_t = {i: 0 for i in metric_dict.keys() if i in best_nodes}
+        for t in range(0, max(binned_timestamps.keys())+1):
+            if not best_nodes:
+                for user, history in dict_in_check.items():
+                    if t in history.keys():
+                        m[t] += history[t]
+                        last_t[user] = t
+                    else:
+                        if last_t[user] != 0:
+                            m[t] += history[last_t[user]]
+            else:
+                for user in best_nodes:
+                    if t in dict_in_check[user].keys():
+                        m[t] += dict_in_check[user][t]
+                        last_t[user] = t
+                    else:
+                        if last_t[user] != 0:
+                            m[t] += dict_in_check[user][last_t[user]]
+        if not best_nodes:
+            if not ind:
+                plt.plot(y_pos, m, label='degree')
+            else:
+                plt.plot(y_pos, m, label='modelled trust')
+        else:
+            if not ind:
+                plt.plot(y_pos, list(map(lambda x: x/len(best_nodes), m)), label='average degree')
+            else:
+                plt.plot(y_pos, list(map(lambda x: x/len(best_nodes), m)), label='average modelled trust')
+    plt.xticks(y_pos[0:len(y_pos):200], y_pos[0:len(y_pos):200])
+    # plt.xticks(rotation=45)
+    plt.xlabel('Days')
+    # plt.ylabel('Users\' aggregated degree and reputation per day')
+    if not best_nodes:
+        plt.title('Degree and Modelled Trust through time')
+    else:
+        plt.title('Degree and Modelled Trust through time for best 100users')
+    plt.grid(True)
+    plt.legend()
+
+    #plt.show()
+    plt.savefig(filename)
+    plt.clf()
 
 
 # Computes the degree of each node in the graph
@@ -239,3 +348,47 @@ def aggregate_edges_by_granularity(edges_per_t, granularity):
             new_edges[bin_id] = [] + v
     
     return new_edges
+
+
+def make_rich_club_coefficient_chart(rich_dict, filename):
+    y_pos = np.arange(len(rich_dict['out-degree'].keys()))
+    for metric, metric_in_time in rich_dict.items():
+        m = []
+        for metric_dict in metric_in_time.values():
+            m.append(metric_dict['coefficient'])
+        plt.plot(y_pos, m, label=metric)
+    plt.xticks(y_pos[0:len(y_pos):25], [round(metric_dict['nodes']/24818*100,1)
+                                        for ind, metric_dict in rich_dict['out-degree'].items()
+                                         if ind in y_pos[0:len(y_pos):25]])
+    # plt.xticks(rotation=45)
+    plt.xlabel('Fraction of nodes (%)')
+    plt.ylabel('Rich club coefficient')
+    plt.title('Rich club coefficient based on 4 centrality metrics')
+    plt.grid(True)
+    plt.legend()
+
+    #plt.show()
+    plt.savefig(filename)
+    plt.clf()
+
+
+def make_rich_club_importance_chart(rich_dict, filename):
+    y_pos = np.arange(len(rich_dict['out-degree'].keys()))
+    for metric, metric_in_time in rich_dict.items():
+        m = []
+        for metric_dict in metric_in_time.values():
+            m.append(metric_dict['importance'])
+        plt.plot(y_pos, m, label=metric)
+    plt.xticks(y_pos[0:len(y_pos):25], [round(metric_dict['nodes']/24818*100,1)
+                                        for ind, metric_dict in rich_dict['out-degree'].items()
+                                         if ind in y_pos[0:len(y_pos):25]])
+    # plt.xticks(rotation=45)
+    plt.xlabel('Fraction of nodes (%)')
+    plt.ylabel('Importance')
+    plt.title('Rich club importance based on 4 centrality metrics')
+    plt.grid(True)
+    plt.legend()
+
+    #plt.show()
+    plt.savefig(filename)
+    plt.clf()

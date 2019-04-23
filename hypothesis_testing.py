@@ -8,6 +8,40 @@ import function as fn
 names = ['a2q', 'c2q', 'c2a', 'total']
 
 
+def modeling_ranking(r, metric='Reputation'):
+    print('\n ----------{}---------- \n'.format(metric))
+    ranking = []
+    # with open('modelling/final_modelled_score.pickle', 'rb') as handle:
+    #     r = pickle.load(handle)
+    for i, v in r.items():
+        ranking.append([i, v])
+    ranking.sort(key=itemgetter(1), reverse=True)
+    for i, v in enumerate(ranking):
+        ranking[i] = [v[0], v[1], i + 1]
+
+    df = pd.read_csv('data/mathoverflow/mathoverflow_dataset.csv')
+    metric_dict = dict(zip(df.UserId, df[metric]))
+
+    metric_list = [[k, v] for k, v in metric_dict.items()]
+    metric_list.sort(key=itemgetter(1), reverse=True)
+    for i, v in enumerate(metric_list):
+        metric_list[i] = [v[0], v[1], i + 1]
+
+    metric_dict = {int(r[0]): float(r[1]) for r in metric_list}
+
+    ranking = {int(r[0]): float(r[1]) for r in ranking}
+
+    temp_metric_dict = {k: v for k, v in metric_dict.items() if k in ranking}
+    metric_df = pd.DataFrame(list(temp_metric_dict.items()), columns=['UserId', metric])
+
+    ranking_dict = {k: v for k, v in ranking.items() if k in temp_metric_dict}
+    ranking_df = pd.DataFrame(list(ranking_dict.items()), columns=['UserId', 'ModelRanking'])
+
+    merged_df = pd.merge(metric_df, ranking_df, on='UserId')
+    merged_df.UserId.nunique()
+    print(spearmanr(merged_df[metric].values, merged_df.ModelRanking.values))
+
+
 def closeness_centrality(t, cc_type='in'):
     if cc_type == 'in':
         print('\n----------IN Closeness Centrality - UpVotes----------\n')
@@ -113,7 +147,7 @@ def eigenvector_centrality(t, ec_type='in'):
         print('\n----------OUT EigenVector Centrality - Views----------\n')
     eigenvector_centrality = [[], [], []]
     for j in range(1, 4):
-        G = nx.read_gpickle('old_pickles/graphs/{0}/{1}.gpickle'.format(t, names[j - 1]))
+        G = nx.read_gpickle('pickles/graphs/{0}/{1}.gpickle'.format(t, names[j - 1]))
         if ec_type == 'out':
             ec = nx.eigenvector_centrality(G.reverse(), weight='weight')
         else:
@@ -150,6 +184,54 @@ def eigenvector_centrality(t, ec_type='in'):
 
         print('--------------------{}-------------------'.format(names[i]))
         print(spearmanr(merged_df.Views.values, merged_df.EigenvectorCentrality.values))
+
+
+def closeness_reputation(t='mathoverflow', cc_type='in'):
+    if cc_type == 'in':
+        print('\n----------IN Closeness Centrality - Reputation----------\n')
+    else:
+        print('\n----------OUT Closeness Centrality - Reputation----------\n')
+
+    closeness_centrality = [[], [], []]
+    for j in range(1, 4):
+        if cc_type == 'in':
+            with open('centralities/closeness/{0}_{1}_in_cc.pickle'.format(t, names[j - 1]), 'rb') as handle:
+                cc = pickle.load(handle)
+        else:
+            with open('centralities/closeness/{0}_{1}_out_cc.pickle'.format(t, names[j - 1]), 'rb') as handle:
+                cc = pickle.load(handle)
+        for i, v in cc.items():
+            closeness_centrality[j - 1].append([i, v])
+        closeness_centrality[j - 1].sort(key=itemgetter(1), reverse=True)
+        for i, v in enumerate(closeness_centrality[j - 1]):
+            closeness_centrality[j - 1][i] = [v[0], v[1], i + 1]
+
+    df = pd.read_csv('data/mathoverflow/mathoverflow_dataset.csv')
+    reputation_dict = dict(zip(df.UserId, df.Reputation))
+
+    reputation_list = [[k, v] for k, v in reputation_dict.items()]
+    reputation_list.sort(key=itemgetter(1), reverse=True)
+    for i, v in enumerate(reputation_list):
+        reputation_list[i] = [v[0], v[1], i + 1]
+
+    reputation_dict = {int(r[0]): float(r[1]) for r in reputation_list}
+
+    for ind, layer in enumerate(closeness_centrality):
+        closeness_centrality[ind] = {int(r[0]): float(r[1]) for r in layer}
+
+    for i in range(3):
+        temp_reputation_dict = {k: v for k, v in reputation_dict.items() if k in closeness_centrality[i]}
+        reputation_df = pd.DataFrame(temp_reputation_dict.items(), columns=['UserId', 'Reputation'])
+
+        closeness_centrality_dict = {k: v for k, v in closeness_centrality[i].items() if k in temp_reputation_dict}
+        closeness_centrality_df = pd.DataFrame(closeness_centrality_dict.items(),
+                                               columns=['UserId', 'ClosenessCentrality'])
+
+        merged_df = pd.merge(reputation_df, closeness_centrality_df, on='UserId')
+        merged_df.UserId.nunique()
+
+        print('--------------------{}-------------------'.format(names[i]))
+        print(spearmanr(merged_df.Reputation.values, merged_df.ClosenessCentrality.values))
 
 
 def total_degree_centrality(t='mathoverflow', degree_type='in'):
@@ -249,7 +331,7 @@ def total_eigenvector_centrality(t='mathoverflow', ec_type='in'):
         print('\n----------OUT EigenVector Centrality - Views----------\n')
 
     eigenvector_centrality = []
-    G = nx.read_gpickle('pickles/graphs/mathoverflow/total_2_1_3.gpickle')
+    G = nx.read_gpickle('pickles/graphs/mathoverflow/total_1_1_1.gpickle')
     if ec_type == 'out':
         ec = nx.eigenvector_centrality(G.reverse(), weight='weight')
     else:
@@ -286,11 +368,56 @@ def total_eigenvector_centrality(t='mathoverflow', ec_type='in'):
     print(spearmanr(merged_df.Views.values, merged_df.EigenvectorCentrality.values))
 
 
+def total_closeness_reputation(t='mathoverflow', cc_type='in'):
+    if cc_type == 'in':
+        print('\n----------IN Closeness Centrality - Reputation----------\n')
+    else:
+        print('\n----------OUT Closeness Centrality - Reputation----------\n')
+    closeness_centrality = []
+    if cc_type == 'in':
+        with open('centralities/closeness/mathoverflow_total_in_cc.pickle', 'rb') as handle:
+            cc = pickle.load(handle)
+    else:
+        with open('centralities/closeness/mathoverflow_total_out_cc.pickle', 'rb') as handle:
+            cc = pickle.load(handle)
+    for i, v in cc.items():
+        closeness_centrality.append([i, v])
+    closeness_centrality.sort(key=itemgetter(1), reverse=True)
+    for i, v in enumerate(closeness_centrality):
+        closeness_centrality[i] = [v[0], v[1], i + 1]
+
+    df = pd.read_csv('data/mathoverflow/mathoverflow_dataset.csv')
+    reputation_dict = dict(zip(df.UserId, df.Reputation))
+
+    reputation_list = [[k, v] for k, v in reputation_dict.items()]
+    reputation_list.sort(key=itemgetter(1), reverse=True)
+    for i, v in enumerate(reputation_list):
+        reputation_list[i] = [v[0], v[1], i + 1]
+
+    reputation_dict = {int(r[0]): float(r[1]) for r in reputation_list}
+
+    closeness_centrality = {int(r[0]): float(r[1]) for r in closeness_centrality}
+
+    temp_reputation_dict = {k: v for k, v in reputation_dict.items() if k in closeness_centrality}
+    reputation_df = pd.DataFrame(temp_reputation_dict.items(), columns=['UserId', 'Reputation'])
+
+    closeness_centrality_dict = {k: v for k, v in closeness_centrality.items() if k in temp_reputation_dict}
+    closeness_centrality_df = pd.DataFrame(closeness_centrality_dict.items(),
+                                           columns=['UserId', 'ClosenessCentrality'])
+
+    merged_df = pd.merge(reputation_df, closeness_centrality_df, on='UserId')
+    merged_df.UserId.nunique()
+
+    print('------------------TOTAL---------------------')
+    print(spearmanr(merged_df.Reputation.values, merged_df.ClosenessCentrality.values))
+
+
 def get_degree_centrality(t='mathoverflow', degree_type='in'):
     """
     Returns the nodes of the network ranked according to their out-degree
     centrality, for each of the 3 interactions.
     :param t: Network's name. Default is MathOverflow
+    :param ec_type: Type of the degree centrality, in-link or out-link
     :return: Nodes ranked according to closeness centrality.
     Output form: {'a2q': [(UserId, Out-Degree centrality, ranking), ...], 'c2q': ...}
     """
@@ -322,6 +449,7 @@ def get_closeness_centrality(t='mathoverflow', cc_type='in'):
     Returns the nodes of the network ranked according to their closeness
     centrality, for each of the 3 interactions.
     :param t: Network's name. Default is MathOverflow
+    :param cc_type: Type of the closeness centrality, for incoming or outward distance
     :return: Nodes ranked according to closeness centrality.
     Output form: {'a2q': [(UserId, Closeness centrality, ranking), ...], 'c2q': ...}
     """
@@ -342,6 +470,34 @@ def get_closeness_centrality(t='mathoverflow', cc_type='in'):
     return G_cc
 
 
+def get_eigenvector_centrality(t='mathoverflow', ec_type='in'):
+    """
+    Returns the nodes of the network ranked according to their eigenvector
+    centrality, for each of the 3 interactions.
+    :param t: Network's name. Default is MathOverflow
+    :param ec_type: Type of the eigenvector centrality, left(in-edges) or right (out-edges)
+    :return: Nodes ranked according to closeness centrality.
+    Output form: {'a2q': [(UserId, Out-Degree centrality, ranking), ...], 'c2q': ...}
+    """
+    G_ec = {}
+    for j in range(1, 5):
+        G_ec[names[j - 1]] = []
+        if j == 4:
+            G = nx.read_gpickle('pickles/graphs/mathoverflow/total_1_1_1.gpickle')
+        else:
+            G = nx.read_gpickle('pickles/graphs/{0}/{1}.gpickle'.format(t, names[j - 1]))
+        if ec_type == 'out':
+            ec = nx.eigenvector_centrality(G.reverse(), weight='weight')
+        else:
+            ec = nx.eigenvector_centrality(G, weight='weight')
+        for i, v in ec.items():
+            G_ec[names[j - 1]].append((i, v))
+        G_ec[names[j - 1]].sort(key=itemgetter(1), reverse=True)
+        for i, v in enumerate(G_ec[names[j - 1]]):
+            G_ec[names[j - 1]][i] = (v[0], v[1], i + 1)
+    return G_ec
+
+
 def create_weighted_total_graph():
     a2q = nx.read_gpickle('pickles/graphs/mathoverflow/a2q.gpickle')
     c2q = nx.read_gpickle('pickles/graphs/mathoverflow/c2q.gpickle')
@@ -352,21 +508,32 @@ def create_weighted_total_graph():
                                                                              str(c2a_weight)), 'wb') as handle:
         pickle.dump(G, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
+# degree_centrality("mathoverflow", degree_type='in')
+# degree_centrality("mathoverflow", degree_type='out')
+# eigenvector_centrality("mathoverflow", 'in')
+# eigenvector_centrality("mathoverflow", 'out')
+# closeness_centrality("mathoverflow", cc_type='in')
+# closeness_centrality("mathoverflow", cc_type='out')
+# create_weighted_total_graph()
+# total_degree_centrality(degree_type='in')
+# total_degree_centrality(degree_type='out')
+# total_closeness_centrality(cc_type='in')
+# total_closeness_centrality(cc_type='out')
+# total_eigenvector_centrality(ec_type='in')
+# total_eigenvector_centrality(ec_type='out')
+# a = get_degree_centrality(degree_type='in')
+# b = get_degree_centrality(degree_type='out')
+# c = get_closeness_centrality(cc_type='in')
+# d = get_closeness_centrality(cc_type='out')
+# e = get_eigenvector_centrality(ec_type='in')
+# f = get_eigenvector_centrality(ec_type='out')
+#
+# closeness_reputation(cc_type='in')
+# closeness_reputation(cc_type='out')
+# total_closeness_reputation(cc_type='in')
+# total_closeness_reputation(cc_type='out')
 
-degree_centrality("mathoverflow", degree_type='in')
-degree_centrality("mathoverflow", degree_type='out')
-eigenvector_centrality("mathoverflow", 'in')
-eigenvector_centrality("mathoverflow", 'out')
-closeness_centrality("mathoverflow", cc_type='in')
-closeness_centrality("mathoverflow", cc_type='out')
-create_weighted_total_graph()
-total_degree_centrality(degree_type='in')
-total_degree_centrality(degree_type='out')
-total_closeness_centrality(cc_type='in')
-total_closeness_centrality(cc_type='out')
-total_eigenvector_centrality(ec_type='in')
-total_eigenvector_centrality(ec_type='out')
-a = get_degree_centrality(degree_type='in')
-b = get_degree_centrality(degree_type='out')
-c = get_closeness_centrality(cc_type='in')
-d = get_closeness_centrality(cc_type='out')
+# use this to compute the correlation between the ranking
+# of the modeling and the metrics in the list
+# for metric in ['Reputation', 'ViewCount', 'UpVotes']:
+#     modeling_ranking(metric)
